@@ -191,17 +191,17 @@ module.exports = Message = (function(superClass) {
       keys: conversationIDs,
       group: true,
       reduce: true
-    }, function(err, rows) {
-      var i, len, out, row;
-      if (err) {
-        return callback(err);
+    }, function(error, rows) {
+      var conversations, i, len, row;
+      if (rows == null) {
+        rows = {};
       }
-      out = {};
+      conversations = {};
       for (i = 0, len = rows.length; i < len; i++) {
         row = rows[i];
-        out[row.key] = row.value;
+        conversations[row.key] = row.value;
       }
-      return callback(null, out);
+      return callback(error, conversations);
     });
   };
 
@@ -220,11 +220,11 @@ module.exports = Message = (function(superClass) {
         return callback(err);
       }
       messages = rows.map(function(row) {
-        var error;
+        var error1;
         try {
           return new Message(row.doc);
-        } catch (error) {
-          err = error;
+        } catch (error1) {
+          err = error1;
           log.error("Wrong message", err, row.doc);
           return null;
         }
@@ -260,21 +260,21 @@ module.exports = Message = (function(superClass) {
       }, function(cb) {
         return Message.getResults(mailboxID, params, cb);
       }
-    ], function(err, results) {
+    ], function(error, results) {
       var conversationIDs, count, messages;
-      if (err) {
-        return callback(err);
+      if (error) {
+        return callback(error);
       }
       count = results[0], messages = results[1];
       conversationIDs = _.uniq(_.pluck(messages, 'conversationID'));
-      return Message.getConversationLengths(conversationIDs, function(err, lengths) {
-        if (err) {
-          return callback(err);
+      return Message.getConversationLengths(conversationIDs, function(error, conversationLength) {
+        if (error) {
+          return callback(error);
         }
         return callback(null, {
+          conversationLength: conversationLength,
           messages: messages,
-          count: count,
-          conversationLengths: lengths
+          count: count
         });
       });
     });
@@ -575,7 +575,7 @@ module.exports = Message = (function(superClass) {
   };
 
   Message.prototype.toClientObject = function() {
-    var attachments, err, error, raw, ref;
+    var attachments, err, error1, raw, ref;
     raw = this.toObject();
     if ((ref = raw.attachments) != null) {
       ref.forEach(function(file) {
@@ -594,8 +594,8 @@ module.exports = Message = (function(superClass) {
           tables: true,
           wordwrap: 80
         });
-      } catch (error) {
-        err = error;
+      } catch (error1) {
+        err = error1;
         log.error("Error converting HTML to text", err, raw.html);
       }
     }

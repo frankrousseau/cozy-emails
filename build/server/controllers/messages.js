@@ -169,30 +169,8 @@ module.exports.listByMailbox = function(req, res, next) {
     resultsAfter: req.pageAfter,
     flag: req.flag
   }, function(err, result) {
-    var last, lastDate, links, messages, pageAfter;
     if (err) {
       return next(err);
-    }
-    messages = result.messages;
-    if (messages.length === MSGBYPAGE) {
-      last = messages[messages.length - 1];
-      if (req.sortField === 'from' || req.sortField === 'dest') {
-        pageAfter = messages.length + (parseInt(req.pageAfter, 10) || 0);
-      } else {
-        lastDate = last.date || new Date();
-        pageAfter = lastDate.toISOString();
-      }
-      links = {
-        next: ("mailbox/" + mailboxID + "/?") + querystring.stringify({
-          flag: req.flagcode,
-          sort: req.sort,
-          before: req.before,
-          after: req.after,
-          pageAfter: pageAfter
-        })
-      };
-    } else {
-      links = {};
     }
     if (result.messages == null) {
       result.messages = [];
@@ -201,7 +179,6 @@ module.exports.listByMailbox = function(req, res, next) {
     result.messages = result.messages.map(function(msg) {
       return msg.toClientObject();
     });
-    result.links = links;
     return res.send(result);
   });
 };

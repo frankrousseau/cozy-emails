@@ -107,6 +107,9 @@ retrieveCounts = function(callback) {
       }
       if (flag === "!\\Seen") {
         countsByMailboxID[boxID].unread = row.value;
+      }
+      if (flag === "\\Flagged") {
+        countsByMailboxID[boxID].flagged = row.value;
       } else if (flag === null) {
         countsByMailboxID[boxID].total = row.value;
       }
@@ -178,6 +181,7 @@ exports.getMailboxClientObject = function(id) {
     nbTotal: (count != null ? count.total : void 0) || 0,
     nbUnread: (count != null ? count.unread : void 0) || 0,
     nbRecent: (count != null ? count.recent : void 0) || 0,
+    nbFlagged: (count != null ? count.flagged : void 0) || 0,
     lastSync: box.lastSync
   };
 };
@@ -382,9 +386,10 @@ Mailbox.on('delete', function(id, deleted) {
 });
 
 Message.on('create', onMessageCreated = function(created) {
-  var boxID, isRead, isRecent, ref, uid;
+  var boxID, isFlagged, isRead, isRecent, ref, uid;
   isRead = indexOf.call(created.flags, '\\Seen') >= 0;
   isRecent = indexOf.call(created.flags, '\\Recent') >= 0;
+  isFlagged = indexOf.call(created.flags, '\\Flagged') >= 0;
   ref = created.mailboxIDs;
   for (boxID in ref) {
     uid = ref[boxID];
@@ -395,6 +400,9 @@ Message.on('create', onMessageCreated = function(created) {
     if (isRecent) {
       countsByMailboxID[boxID].recent += 1;
     }
+    if (isFlagged) {
+      countsByMailboxID[boxID].flagged += 1;
+    }
   }
   if (isRead) {
     unreadByAccountID[created.accountID] += 1;
@@ -403,9 +411,10 @@ Message.on('create', onMessageCreated = function(created) {
 });
 
 Message.on('delete', onMessageDestroyed = function(id, old) {
-  var boxID, ref, uid, wasRead, wasRecent;
+  var boxID, ref, uid, wasFlagged, wasRead, wasRecent;
   wasRead = indexOf.call(old.flags, '\\Seen') >= 0;
   wasRecent = indexOf.call(old.flags, '\\Recent') >= 0;
+  wasFlagged = indexOf.call(old.flags, '\\Flagged') >= 0;
   ref = old.mailboxIDs;
   for (boxID in ref) {
     uid = ref[boxID];
@@ -415,6 +424,9 @@ Message.on('delete', onMessageDestroyed = function(id, old) {
     }
     if (wasRecent) {
       countsByMailboxID[boxID].recent -= 1;
+    }
+    if (wasFlagged) {
+      countsByMailboxID[boxID].flagged -= 1;
     }
   }
   if (wasRead) {

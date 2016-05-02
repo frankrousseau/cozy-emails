@@ -48,7 +48,7 @@ ContactActivity = {
 };
 
 module.exports.create = function(req, res, next) {
-  var activity, ref1;
+  var activity, ref1, ref2;
   activity = req.body;
   switch (activity.data.type) {
     case 'contact':
@@ -73,11 +73,22 @@ module.exports.create = function(req, res, next) {
       }
       break;
     case 'error':
-      log.error(activity.data);
-      log.error((ref1 = activity.data.error) != null ? ref1.stack : void 0);
+      if ((ref1 = activity.data.error) != null ? ref1.stack : void 0) {
+        log.error(activity.data);
+        log.error((ref2 = activity.data.error) != null ? ref2.stack : void 0);
+      } else {
+        log.error(JSON.parse(activity.data.error.msg));
+      }
+      return res.send('ok');
+    case 'warn':
+      log.warn(activity.data.msg);
+      return res.send('ok');
+    case 'info':
+    case 'log':
+      log.info(activity.data.msg);
       return res.send('ok');
     case 'debug':
-      log.info(activity.data.message);
+      log.debug(activity.data.msg);
       return res.send('ok');
     default:
       return res.status(400).send({
