@@ -7,7 +7,6 @@ module.exports = StoreWatchMixin = (stores) ->
         stores.forEach (store) =>
             store.addListener 'change', @_setStateFromStores
 
-
     # Stop listening to the linked stores when the component is unmounted.
     componentWillUnmount: ->
         stores.forEach (store) =>
@@ -15,10 +14,13 @@ module.exports = StoreWatchMixin = (stores) ->
 
     # Build initial state from store values.
     getInitialState: ->
-        return @getStateFromStores()
+        return @getStateFromStores @props
 
+    componentWillReceiveProps: (nextProps={}) ->
+        @setState @getStateFromStores nextProps
+        nextProps
 
-    # Update state with store values.
+    # Update state with store values
     _setStateFromStores: ->
         return unless @isMounted()
 
@@ -29,7 +31,8 @@ module.exports = StoreWatchMixin = (stores) ->
                     result[key] = value
             result
 
-        nextState = @getStateFromStores()
+        nextState = @getInitialState()
         changes = _difference nextState, @state
         unless _.isEmpty changes
+            console.log 'change', changes
             @setState nextState
